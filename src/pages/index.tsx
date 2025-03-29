@@ -16,31 +16,38 @@ const Home: React.FC = () => {
       link: '/projects#rubrix'
     },
     {
+      "title": "Fireshark",
+      "description": "Real-time Network Traffic Monitoring & Analysis",
+      "technologies": ["Python", "Packet Sniffing", "Cybersecurity"],
+      "images": ["/Fireshark/fireshark-1.png  ", "/Fireshark/fireshark-2.png"],
+      "link": "/projects#fireshark"
+    },
+    {
       "title": "Fashion Fusion",
       "description": "AI-Powered Outfit Recommendation Platform",
       "technologies": ["AI/ML", "Computer Vision", "React"],
-      "images": ["/projects/fashion-fusion-1.jpg", "/projects/fashion-fusion-2.jpg"],
+      "images": ["/Fashion_Fusion/fashion-fusion-1.png", "/Fashion_Fusion/fashion-fusion-2.png"],
       "link": "/projects#fashionfusion"
     },
     {
       "title": "Road Sense",
       "description": "Gamified Driving Rules Learning Platform",
       "technologies": ["Java", "QuizGame", "Simulation"],
-      "images": ["/projects/road-sense-1.jpg", "/projects/road-sense-2.jpg"],
+      "images": ["/Road_Sense/road-sense-1.png"],
       "link": "/projects#roadsense"
     },
     {
       "title": "Paint Palace",
       "description": "Interactive Painting & Drawing App",
       "technologies": ["Tkinter", "Python", "GUI"],
-      "images": ["/projects/paint-palace-1.jpg", "/projects/paint-palace-2.jpg"],
+      "images": ["/Paint_Palace/paint-palace-1.png"],
       "link": "/projects#paintpalace"
     },
     {
       "title": "MyShell",
       "description": "Custom Shell Built with C++",
       "technologies": ["C++", "Linux", "Shell Scripting"],
-      "images": ["/projects/myshell-1.jpg", "/projects/myshell-2.jpg"],
+      "images": ["/MyShell/myshell-1.png"],
       "link": "/projects#myshell"
     } 
     // {
