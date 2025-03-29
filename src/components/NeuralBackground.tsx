@@ -1,11 +1,27 @@
-import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useRef, useMemo, useEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 const NeuralBackground: React.FC = () => {
   const pointsRef = useRef<THREE.Points>(null);
   const linesRef = useRef<THREE.LineSegments>(null);
   const timeRef = useRef(0);
+  const mousePosition = useRef({ x: 0, y: 0 });
+  const { camera } = useThree();
+
+  // Handle mouse movement
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      // Convert mouse position to normalized device coordinates (-1 to +1)
+      mousePosition.current = {
+        x: (event.clientX / window.innerWidth) * 2 - 1,
+        y: -(event.clientY / window.innerHeight) * 2 + 1,
+      };
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   // Generate random points for the neural network
   const { points, lines, connections } = useMemo(() => {
@@ -66,39 +82,55 @@ const NeuralBackground: React.FC = () => {
 
     timeRef.current += 0.01;
 
-    // Animate points
+    // Get current positions
     const positions = pointsRef.current.geometry.getAttribute('position');
-    if (positions) {
-      const array = positions.array as Float32Array;
-      for (let i = 0; i < array.length; i += 3) {
-        array[i] += Math.sin(timeRef.current + i) * 0.01;
-        array[i + 1] += Math.cos(timeRef.current + i) * 0.01;
-        array[i + 2] += Math.sin(timeRef.current + i * 0.5) * 0.01;
-      }
-      positions.needsUpdate = true;
-    }
+    if (!positions) return;
 
-    // Animate lines
+    const array = positions.array as Float32Array;
+    const mouseInfluence = 0.5; // Adjust this value to control mouse influence
+
+    // Update point positions with mouse influence
+    for (let i = 0; i < array.length; i += 3) {
+      // Base movement
+      array[i] += Math.sin(timeRef.current + i) * 0.01;
+      array[i + 1] += Math.cos(timeRef.current + i) * 0.01;
+      array[i + 2] += Math.sin(timeRef.current + i * 0.5) * 0.01;
+
+      // Mouse influence
+      const distanceFromMouse = Math.sqrt(
+        Math.pow(array[i] - mousePosition.current.x * 5, 2) +
+        Math.pow(array[i + 1] - mousePosition.current.y * 5, 2)
+      );
+
+      if (distanceFromMouse < 2) {
+        const influence = (2 - distanceFromMouse) / 2;
+        array[i] += (mousePosition.current.x * 5 - array[i]) * influence * mouseInfluence;
+        array[i + 1] += (mousePosition.current.y * 5 - array[i + 1]) * influence * mouseInfluence;
+      }
+    }
+    positions.needsUpdate = true;
+
+    // Update line positions
     const linePositions = linesRef.current.geometry.getAttribute('position');
     if (linePositions) {
-      const array = linePositions.array as Float32Array;
-      const pointArray = positions?.array as Float32Array;
-      
-      if (pointArray) {
-        let lineIndex = 0;
-        for (let i = 0; i < connections.length; i++) {
-          const pointConnections = connections[i];
-          if (pointConnections && pointConnections.length > 0) {
-            for (const endIndex of pointConnections) {
-              if (lineIndex * 6 + 5 < array.length) {
-                array[lineIndex * 6] = pointArray[i * 3];
-                array[lineIndex * 6 + 1] = pointArray[i * 3 + 1];
-                array[lineIndex * 6 + 2] = pointArray[i * 3 + 2];
-                array[lineIndex * 6 + 3] = pointArray[endIndex * 3];
-                array[lineIndex * 6 + 4] = pointArray[endIndex * 3 + 1];
-                array[lineIndex * 6 + 5] = pointArray[endIndex * 3 + 2];
-                lineIndex++;
-              }
+      const lineArray = linePositions.array as Float32Array;
+      let lineIndex = 0;
+
+      // Update each connection
+      for (let i = 0; i < connections.length; i++) {
+        const pointConnections = connections[i];
+        if (pointConnections && pointConnections.length > 0) {
+          for (const endIndex of pointConnections) {
+            if (lineIndex * 6 + 5 < lineArray.length) {
+              // Start point
+              lineArray[lineIndex * 6] = array[i * 3];
+              lineArray[lineIndex * 6 + 1] = array[i * 3 + 1];
+              lineArray[lineIndex * 6 + 2] = array[i * 3 + 2];
+              // End point
+              lineArray[lineIndex * 6 + 3] = array[endIndex * 3];
+              lineArray[lineIndex * 6 + 4] = array[endIndex * 3 + 1];
+              lineArray[lineIndex * 6 + 5] = array[endIndex * 3 + 2];
+              lineIndex++;
             }
           }
         }
@@ -106,11 +138,14 @@ const NeuralBackground: React.FC = () => {
       linePositions.needsUpdate = true;
     }
 
-    // Rotate the entire scene
-    pointsRef.current.rotation.x = Math.sin(timeRef.current * 0.5) * 0.1;
-    pointsRef.current.rotation.y = Math.cos(timeRef.current * 0.5) * 0.1;
-    linesRef.current.rotation.x = Math.sin(timeRef.current * 0.5) * 0.1;
-    linesRef.current.rotation.y = Math.cos(timeRef.current * 0.5) * 0.1;
+    // Rotate the entire scene based on mouse position
+    const targetRotationX = mousePosition.current.y * 0.2;
+    const targetRotationY = mousePosition.current.x * 0.2;
+    
+    pointsRef.current.rotation.x += (targetRotationX - pointsRef.current.rotation.x) * 0.1;
+    pointsRef.current.rotation.y += (targetRotationY - pointsRef.current.rotation.y) * 0.1;
+    linesRef.current.rotation.x = pointsRef.current.rotation.x;
+    linesRef.current.rotation.y = pointsRef.current.rotation.y;
   });
 
   return (
